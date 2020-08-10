@@ -1,8 +1,9 @@
-const { MongoClient, ObjectID } = require("mongodb");
+const { MongoClient } = require("mongodb");
+const config = require("../../config/config.json");
 
-function usersCollection() {
-	const url = "mongodb://localhost:27017";
-	const dbName = "covid";
+function favoritesCollection() {
+	const url = config.databaseConfig.dbUrl;
+	const dbName = config.databaseConfig.dbName;
 
 	const updateCounties = (user, counties) => {
 		return new Promise(async (resolve, reject) => {
@@ -14,15 +15,17 @@ function usersCollection() {
 					.collection("favorites")
 					.findOneAndUpdate(
 						{ userId: user.sub },
-						{ $set: { counties: counties } },
+						{ $set: { userId: user.sub, counties: counties } },
 						{
-							upsert: 1,
-							returnNewDocument: 1,
+							upsert: true,
+							returnOriginal: false,
+							projection: { counties: 1 },
 						}
 					);
 				resolve(updateCounties);
 				client.close();
 			} catch (error) {
+				console.log(error);
 				reject(error);
 			}
 		});
@@ -51,19 +54,19 @@ function usersCollection() {
 			try {
 				await client.connect();
 				const db = client.db(dbName);
-				const updateCounties = await db
-					.collection("favorites")
-					.findOneAndUpdate(
-						{ userId: user.sub },
-						{ $set: { states: states } },
-						{
-							upsert: 1,
-							returnNewDocument: 1,
-						}
-					);
-				resolve(updateCounties);
+				const updateStates = await db.collection("favorites").findOneAndUpdate(
+					{ userId: user.sub },
+					{ $set: { userId: user.sub, states: states } },
+					{
+						upsert: true,
+						returnOriginal: false,
+						projection: { states: 1 },
+					}
+				);
+				resolve(updateStates);
 				client.close();
 			} catch (error) {
+				console.log(error);
 				reject(error);
 			}
 		});
@@ -94,4 +97,4 @@ function usersCollection() {
 	};
 }
 
-module.exports = usersCollection();
+module.exports = favoritesCollection();

@@ -1,0 +1,6 @@
+{
+	"databaseConfig": {
+		"dbUrl": "mongodb://mongodb:27017",
+		"dbName": "covid"
+	}
+}

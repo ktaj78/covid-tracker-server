@@ -1,8 +1,8 @@
 {
 	"name": "my-covid-backend",
 	"version": "1.0.0",
-	"description": "",
-	"main": "index.js",
+	"description": "Back-end covid app services on Docker",
+	"main": "src/server.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "npx nodemon --exec npx babel-node src/server.js"

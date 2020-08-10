@@ -1,10 +1,11 @@
 const { MongoClient, ObjectID } = require("mongodb");
+const config = require("../../config/config.json");
 
 function statesCollection() {
-	const url = "mongodb://localhost:27017";
-	const dbName = "covid";
+	const url = config.databaseConfig.dbUrl;
+	const dbName = config.databaseConfig.dbName;
 
-	function getStates(query, sort, limit) {
+	function getStates(query, sort, limit, projection = {}) {
 		return new Promise(async (resolve, reject) => {
 			const client = new MongoClient(url);
 			try {
@@ -19,8 +20,11 @@ function statesCollection() {
 				if (limit === undefined) {
 					limit = 10;
 				}
-				console.log(limit);
-				let items = db.collection("states").find(query).sort(sort);
+				let items = db
+					.collection("states")
+					.find(query)
+					.project(projection)
+					.sort(sort);
 
 				if (limit > 0) {
 					items = items.limit(limit);
@@ -34,6 +38,9 @@ function statesCollection() {
 		});
 	}
 
+	function getStatesSummary(query, sort, limit) {
+		return getStates(query, sort, limit, { metrics: 0 });
+	}
 	function getStatesById(id) {
 		return new Promise(async (resolve, reject) => {
 			const client = new MongoClient(url);
@@ -58,7 +65,6 @@ function statesCollection() {
 			try {
 				await client.connect();
 				const db = client.db(dbName);
-
 				let items = db
 					.collection("states")
 					.find({
@@ -70,7 +76,6 @@ function statesCollection() {
 				if (limit > 0) {
 					items = items.limit(limit);
 				}
-
 				resolve(await items.toArray());
 				client.close();
 			} catch (error) {
@@ -78,153 +83,12 @@ function statesCollection() {
 			}
 		});
 	}
-
-	function getStateByFips(fips) {
-		return new Promise(async (resolve, reject) => {
-			const client = new MongoClient(url);
-			try {
-				await client.connect();
-				const db = client.db(dbName);
-				const item = await db.collection("state").findOne({ fips: fips });
-				resolve(item);
-				client.close();
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	function getStatesByFips(fips) {
-		return new Promise(async (resolve, reject) => {
-			const client = new MongoClient(url);
-			try {
-				await client.connect();
-				const db = client.db(dbName);
-				const items = await db
-					.collection("states")
-					.find({ fips: { $in: fips } })
-					.sort({ healthscore: -1 });
-
-				resolve(await items.toArray());
-				client.close();
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	function getDeathsByFips(fips) {
-		return new Promise(async (resolve, reject) => {
-			const client = new MongoClient(url);
-			try {
-				await client.connect();
-				const db = client.db(dbName);
-				const item = await db.collection("states").findOne({ fips: fips });
-				resolve(item);
-				client.close();
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	function getCasesByFips(fips) {
-		return new Promise(async (resolve, reject) => {
-			const client = new MongoClient(url);
-			try {
-				await client.connect();
-				const db = client.db(dbName);
-				const item = await db.collection("states").findOne({ fips: fips });
-				resolve(item);
-				client.close();
-			} catch (error) {
-				reject(error);
-			}
-		});
-	}
-
-	// function addFavorite(item) {
-	// 	return new Promise(async (resolve, reject) => {
-	// 		const client = new MongoClient(url);
-	// 		try {
-	// 			await client.connect();
-	// 			const db = client.db(dbName);
-	// 			const addedItem = await db.collection("users").insertOne(item);
-	// 			console.log(addedItem);
-	// 			resolve(addedItem.ops[0]);
-	// 			client.close();
-	// 		} catch (error) {
-	// 			reject(error);
-	// 		}
-	// 	});
-	// }
-
-	// function getFavorites(query) {
-	// 	return new Promise(async (resolve, reject) => {
-	// 		const client = new MongoClient(url);
-	// 		try {
-	// 			await client.connect();
-	// 			const db = client.db(dbName);
-
-	// 			let items = db.collection("favorites").find(query);
-
-	// 			resolve(await items.toArray());
-	// 			client.close();
-	// 		} catch (error) {
-	// 			reject(error);
-	// 		}
-	// 	});
-	//	}
-
-	// function update(id, newItem) {
-	// 	return new Promise(async (resolve, reject) => {
-	// 		const client = new MongoClient(url);
-	// 		try {
-	// 			await client.connect();
-	// 			const db = client.db(dbName);
-	// 			const updatedItem = await db
-	// 				.collection("state")
-	// 				.findOneAndReplace({ _id: ObjectID(id) }, newItem, {
-	// 					returnOriginal: false,
-	// 				});
-	// 			resolve(updatedItem.value);
-	// 			client.close();
-	// 		} catch (error) {
-	// 			reject(error);
-	// 		}
-	// 	});
-	// }
-
-	// function removeFavorite(id) {
-	// 	return new Promise(async (resolve, reject) => {
-	// 		const client = new MongoClient(url);
-	// 		try {
-	// 			await client.connect();
-	// 			const db = client.db(dbName);
-	// 			const removed = await db
-	// 				.collection("favorites")
-	// 				.deleteOne({ _id: ObjectID(id) });
-	// 			resolve(removed.deletedCount);
-	// 			client.close();
-	// 		} catch (error) {
-	// 			reject(error);
-	// 		}
-	// 	});
-	// }
-
-	// function updateFavorites(user, favorites) {
-	// 	console.log(user);
-	// 	console.log(favorites);
-	// }
 
 	return {
 		getStates,
+		getStatesSummary,
 		getStatesById,
 		searchStates,
-		getStateByFips,
-		getStatesByFips,
-		getDeathsByFips,
-		getCasesByFips,
 	};
 }
 
